@@ -42,7 +42,7 @@ die "## TODO: error (idl-file-name)" unless defined $input;
 my $testset_dir_name = $test_dir_name . '/' . $testset_id . '/';
 mkpath $testset_dir_name;
 
-generate_support_files ();
+my $all_tests = [];
 
 require Whatpm::WebIDL;
 my $p = Whatpm::WebIDL::Parser->new;
@@ -106,7 +106,7 @@ while (@interface) {
         ($interface_id . '-interface-prototype-object-read-only',
          qq{wttAssertReadOnly ($interface_name, 'prototype', '1');\n},
          depends => [$interface_id .
-                     '-interface-prototype-object-read-only']);
+                     '-interface-prototype-object-has-property']);
 
       ## Instance object's [[HasInstance]]
       generate_test
@@ -116,7 +116,7 @@ while (@interface) {
                             'undefined');\n} .
          qq{wttAssertFalse (0 instanceof $interface_name, 'number');\n} .
          qq{wttAssertFalse ("" instanceof $interface_name, 'string');\n},
-         depends => [$interface_id .'-interface-object']);
+         depends => [$interface_id .'-interface-object-has-property']);
           ## NOTE: WebIDL's algorithm, step 1 cases
 
       generate_test
@@ -124,8 +124,9 @@ while (@interface) {
          '-interface-object-has-instance-host-object-' . $_->{id},
          qq{var v = wttGetInstance ('$interface_name', '$_->{id}');\n} .
          qq{wttAssertTrue (v instanceof $interface_name, '1');\n},
-         depends => [$interface_id . '-interface-object',
-                     $interface_id . '-interface-prototype-object'])
+         depends => [$interface_id . '-interface-object-has-property',
+                     $interface_id .
+                     '-interface-prototype-object-has-property'])
           for @{$instances->{$interface_name} or []};
           ## NOTE: WebIDL's algorithm, step 5 cases
 
@@ -135,8 +136,9 @@ while (@interface) {
          qq{V.prototype = null;\n} .
          qq{var v = new V ();\n} .
          qq{wttAssertFalse (v instanceof $interface_name, 'null');\n},
-         depends => [$interface_id . '-interface-object',
-                     $interface_id . '-interface-prototype-object']);
+         depends => [$interface_id . '-interface-object-has-property',
+                     $interface_id .
+                     '-interface-prototype-object-has-property']);
           ## NOTE: WebIDL's algorithm, step 7 cases
 
       generate_test
@@ -149,8 +151,9 @@ while (@interface) {
          qq{W.prototype = v;\n} .
          qq{var w = new W ();\n} .
          qq{wttAssertTrue (w instanceof $interface_name, 'level-1');\n},
-         depends => [$interface_id . '-interface-object',
-                     $interface_id . '-interface-prototype-object']);
+         depends => [$interface_id . '-interface-object-has-property',
+                     $interface_id .
+                     '-interface-prototype-object-has-property']);
           ## NOTE: WebIDL's algorithm, step 8 cases
 
       generate_test
@@ -160,8 +163,9 @@ while (@interface) {
          qq{wttAssertFalse ((new Date ()) instanceof $interface_name,
                             'date');\n} .
          qq{wttAssertFalse ([] instanceof $interface_name, 'array');\n},
-         depends => [$interface_id . '-interface-object',
-                     $interface_id . '-interface-prototype-object']);
+         depends => [$interface_id . '-interface-object-has-property',
+                     $interface_id .
+                     '-interface-prototype-object-has-property']);
           ## NOTE: WebIDL's algorithm, step 9 -> step 7 cases
     }
 
@@ -193,6 +197,8 @@ while (@interface) {
   }
 }
 
+generate_support_files ();
+
 sub htescape ($) {
   my $s = shift;
   $s =~ s/&/&amp;/g;
@@ -211,7 +217,12 @@ sub generate_id ($$) {
 
 sub generate_test ($$;%) {
   my ($test_id, $test_code, %opt) = @_;
+
   my $test_file_name = $testset_dir_name . $test_id . '.html';
+  push @$all_tests, {depends => $opt{depends},
+                     id => $test_id,
+                     fileName => $test_id . '.html'};
+
   open my $test_file, '>:utf8', $test_file_name
       or die "$0: $test_file_name: $!";
   print $test_file q[<!DOCTYPE HTML><title>];
@@ -244,6 +255,122 @@ sub generate_support_files () {
     print $file qq[AddCharset utf-8 .html\n];
     print $file qq[AddType text/javascript .js\n];
     print $file qq[AddCharset utf-8 .js\n];
+  }
+
+  {
+    my $path = $testset_dir_name . 'all.html';
+    open my $file, '>:utf8', $path or die "$0: $path: $!";
+    print $file qq[<!DOCTYPE HTML>
+<title>@{[htescape ($testset_id)]}</title>
+<body>
+<p id=status>Not executed, since scripting is not enabled.</p>
+<p><span id=passed>0</span> passed,
+<span id=failed>0</span> failed,
+<span id=skipped>0</span> skipped.</p>
+
+<p>Failed tests:
+<ul id=failed-list></ul>
+
+<p>Skipped tests:
+<ul id=skipped-list></ul>
+
+<iframe style="border-width: 0; width: 0; height: 0"></iframe>
+<script>
+  var tests = @{[JSON::objToJson ($all_tests)]};
+  var testsLength = tests.length;
+</script>
+<script>
+  document.getElementById ('status').firstChild.data = 'Executing...';
+
+  var iframe = document.getElementsByTagName ('iframe')[0];
+
+  var testResults = {};
+  var passedTestsNumber = 0;
+  var failedTestsNumber = 0;
+  var skippedTestsNumber = 0;
+  var currentTest;
+
+  if (document.all && !window.opera) {
+    iframe.onreadystatechange = function () {
+      if (this.readyState == 'complete') {
+        getTestResult ();
+        while (true) {
+          if (nextTest ()) break;
+        }
+      }
+    }
+  } else {
+    iframe.onload = function () {
+      getTestResult ();
+      while (true) {
+        if (nextTest ()) break;
+      }
+    }
+  }
+
+  while (true) {
+    if (nextTest ()) break;
+  }
+
+  function getTestResult () {
+    if (!currentTest) return;
+    
+    var r = iframe.contentWindow.document.getElementById ('result');
+    if (r.className == 'PASS') {
+      document.getElementById ('passed').firstChild.data = ++passedTestsNumber;
+      testResults[currentTest.id] = true;
+    } else {
+      document.getElementById ('failed').firstChild.data = ++failedTestsNumber;
+      var li = document.createElement ('li');
+      li.innerHTML = '<a>xxxx</a>: <span>xxxx</span>';
+      li.firstChild.href = currentTest.fileName;
+      li.firstChild.firstChild.data = currentTest.id;
+      li.lastChild.firstChild.data = r.firstChild.data;
+      document.getElementById ('failed-list').appendChild (li);
+    }
+  } // getTestResult
+
+  function nextTest () {
+    if (tests.length > 0) {
+      document.getElementById ('status').firstChild.data
+          = (testsLength - tests.length + 1) + ' of ' + testsLength;
+
+      var nextTest = tests.shift ();
+
+      var skipTest = false;
+      if (nextTest.depends) {
+        for (var i in nextTest.depends) {
+          var dTestId = nextTest.depends[i];
+          if (!testResults[dTestId]) {
+            document.getElementById ('skipped').firstChild.data
+                = ++skippedTestsNumber;
+            var li = document.createElement ('li');
+            li.innerHTML = '<a>xxxx</a>: skipped due to failure of <a>yy</a>';
+            li.firstChild.href = nextTest.fileName;
+            li.firstChild.firstChild.data = nextTest.id;
+            li.lastChild.firstChild.data = dTestId;
+            document.getElementById ('skipped-list').appendChild (li);
+            skipTest = true;
+            break;
+          }
+        }
+      }
+      if (skipTest) {
+        return false;
+      }
+
+      currentTest = nextTest;
+      iframe.src = nextTest.fileName;
+    } else {
+      iframe.onreadystatechange = null;
+      iframe.onload = null;
+      document.getElementById ('status').firstChild.data = 'Done';
+    }
+
+    return true;
+  }
+</script>
+];
   }
   
   {
