@@ -1,0 +1,9 @@
+2008-10-09  Wakaba  <wakaba@suika.fam.cx>
+
+	* cvscommit.sh: New file.
+
+	* ChangeLog: New file.
+
+	* bin/: New directory.
+
+
