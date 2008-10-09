@@ -56,7 +56,10 @@ while (@interface) {
     my $interface_id = generate_id ($interface_name, 1);
 
     ## Interface object
+    my $has_interface_object;
     unless ($interface->has_extended_attribute ('NoInterfaceObject')) {
+      $has_interface_object = 1;
+
       generate_test
         ($interface_id . '-interface-object-has-property',
          qq{var global = wttGetGlobal ();\n} .
@@ -168,22 +171,34 @@ while (@interface) {
          depends => [$interface_id .
                      '-interface-prototype-object-has-property']);
 
-      ## Interface prototype object's constructor
-      generate_test
-        ($interface_id .
-         '-interface-prototype-object-constructor-has-property',
-         qq{wttAssertTrue ('constructor' in $interface_name.prototype,
-                           '0');\n},
-         depends => [$interface_id .
-                     '-interface-prototype-object-has-property']);
+      if ($interface->has_extended_attribute ('Constructor')) {
+        ## Interface prototype object's constructor
+        generate_test
+          ($interface_id .
+           '-interface-prototype-object-constructor-has-property',
+           qq{wttAssertTrue ('constructor' in $interface_name.prototype,
+                             '0');\n},
+           depends => [$interface_id .
+                       '-interface-prototype-object-has-property']);
+        
+        generate_test
+          ($interface_id .
+           '-interface-prototype-object-constructor-dont-enum',
+           qq{wttAssertDontEnum ($interface_name.prototype, 'constructor',
+                                 '0');\n},
+           depends => [$interface_id .
+                       '-interface-prototype-object-constructor-has-property']);
+      }
 
-      generate_test
-        ($interface_id .
-         '-interface-prototype-object-constructor-dont-enum',
-         qq{wttAssertDontEnum ($interface_name.prototype, 'constructor',
-                               '0');\n},
-         depends => [$interface_id .
-                     '-interface-prototype-object-constructor-dont-enum']);
+      ## TODO: "However, it MUST be an object that provides access to
+      ## the properties corresponding to the operations and constants
+      ## defined on the interfaces from which this interface
+      ## inherits. Changes made to the interface prototype objects of
+      ## superinterfaces MUST be reflected through this object, as
+      ## with normal prototype-based single inheritance in
+      ## ECMAScript. If more than one superinterface has a given
+      ## property, it is implementation specific which one is
+      ## accessed. "
     }
 
     for (@{$interface->get_extended_attribute_nodes ('NamedConstructor')}) {
@@ -211,6 +226,49 @@ while (@interface) {
       ## interface or throw an exception - don't check for now (see
       ## note above).
     }
+
+    for my $def (@{$interface->child_nodes}) {
+      if ($def->isa ('Whatpm::WebIDL::Const')) {
+        my $const_name = $def->node_name;
+        my $const_value = $def->value_text;
+        my $const_id = generate_id ($const_name, 2);
+
+        if ($has_interface_object) {
+          for my $aaa (['interface-object', $interface_name, []],
+                       ['interface-prototype-object',
+                        $interface_name.'.prototype',
+                        [$interface_id .
+                         '-interface-prototype-object-has-property']]) {
+            generate_test
+              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+               '-has-property',
+               qq{wttAssertTrue ('$const_name' in $aaa->[1], '1');\n},
+               depends => $aaa->[2]);
+            
+            generate_test
+              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+               '-dont-delete',
+               qq{wttAssertDontDelete ($aaa->[1], '$const_name', '1');\n},
+               depends => [$interface_id . '-'.$aaa->[0].'-'.
+                           $const_id .'-has-property']);
+            
+            generate_test
+              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+               '-read-only',
+               qq{wttAssertReadOnly ($aaa->[1], '$const_name', '1');\n},
+               depends => [$interface_id . '-'.$aaa->[0].'-'.
+                           $const_id .'-has-property']);
+
+            generate_test
+              ($interface_id . '-'.$aaa->[0].'-' . $const_id . '-value',
+               qq{wttAssertEquals ($aaa->[1].$const_name, $const_value,
+                                   '1');\n},
+               depends => [$interface_id . '-'.$aaa->[0].'-'.
+                           $const_id .'-has-property']);
+          }
+        }
+      }
+    }
   } elsif ($interface->isa ('Whatpm::WebIDL::Exception')) {
 
   } elsif ($interface->isa ('Whatpm::WebIDL::Module')) {
@@ -230,9 +288,14 @@ sub htescape ($) {
 
 sub generate_id ($$) {
   my $s = shift;
-  $s =~ s/([A-Z]+)([A-Z])/-@{[lc $1]}-@{[lc $2]}/g;
-  $s =~ s/([A-Z])/-@{[lc $1]}/g;
-  $s =~ s/^-// if $_[0];
+  if ($_[0] == 2) {
+    $s =~ tr/A-Z_/a-z-/;
+    return $s;
+  } else {
+    $s =~ s/([A-Z]+)([A-Z])/-@{[lc $1]}-@{[lc $2]}/g;
+    $s =~ s/([A-Z])/-@{[lc $1]}/g;
+    $s =~ s/^-// if $_[0];
+  }
   return $s;
 } # generate_id
 

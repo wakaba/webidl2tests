@@ -1,5 +1,10 @@
 2008-10-09  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Interface prototype object's |constructor| property
+	test added.  Constant value property tests added.
+
+2008-10-09  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Typo fixed.  Generate test harness HTML page.
 
 2008-10-09  Wakaba  <wakaba@suika.fam.cx>
