@@ -90,24 +90,6 @@ while (@interface) {
       ## lack of it (WebIDL allows any possible implementation of
       ## [[Construct]], which implies any exception may be thrown)).
 
-      ## Interface prototype object
-      generate_test
-        ($interface_id . '-interface-prototype-object-has-property',
-         qq{wttAssertTrue ('prototype' in $interface_name, '0');\n},
-         depends => [$interface_id . '-interface-object-has-property']);
-      
-      generate_test
-        ($interface_id . '-interface-prototype-object-dont-delete',
-         qq{wttAssertDontDelete ($interface_name, 'prototype', '1');\n},
-         depends => [$interface_id .
-                     '-interface-prototype-object-has-property']);
-      
-      generate_test
-        ($interface_id . '-interface-prototype-object-read-only',
-         qq{wttAssertReadOnly ($interface_name, 'prototype', '1');\n},
-         depends => [$interface_id .
-                     '-interface-prototype-object-has-property']);
-
       ## Instance object's [[HasInstance]]
       generate_test
         ($interface_id . '-interface-object-has-instance-non-object',
@@ -167,6 +149,41 @@ while (@interface) {
                      $interface_id .
                      '-interface-prototype-object-has-property']);
           ## NOTE: WebIDL's algorithm, step 9 -> step 7 cases
+
+      ## Interface prototype object
+      generate_test
+        ($interface_id . '-interface-prototype-object-has-property',
+         qq{wttAssertTrue ('prototype' in $interface_name, '0');\n},
+         depends => [$interface_id . '-interface-object-has-property']);
+      
+      generate_test
+        ($interface_id . '-interface-prototype-object-dont-delete',
+         qq{wttAssertDontDelete ($interface_name, 'prototype', '1');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-has-property']);
+      
+      generate_test
+        ($interface_id . '-interface-prototype-object-read-only',
+         qq{wttAssertReadOnly ($interface_name, 'prototype', '1');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-has-property']);
+
+      ## Interface prototype object's constructor
+      generate_test
+        ($interface_id .
+         '-interface-prototype-object-constructor-has-property',
+         qq{wttAssertTrue ('constructor' in $interface_name.prototype,
+                           '0');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-has-property']);
+
+      generate_test
+        ($interface_id .
+         '-interface-prototype-object-constructor-dont-enum',
+         qq{wttAssertDontEnum ($interface_name.prototype, 'constructor',
+                               '0');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-constructor-dont-enum']);
     }
 
     for (@{$interface->get_extended_attribute_nodes ('NamedConstructor')}) {
@@ -189,6 +206,10 @@ while (@interface) {
          qq{var global = wttGetGlobal ();\n} .
          qq{wttAssertDontEnum (global, '$name', '1');\n},
          depends => [$interface_id . '-constructor-' . $id . '-has-property']);
+
+      ## [[Construct]] must return an object implementing the
+      ## interface or throw an exception - don't check for now (see
+      ## note above).
     }
   } elsif ($interface->isa ('Whatpm::WebIDL::Exception')) {
 
