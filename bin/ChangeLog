@@ -1,5 +1,11 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Make result page URL configurable.  Don't generate
+	invalid JavaScript code even when there is no crash information
+	available.  Link to the result page.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Test interface object even if NativeObject extended
 	attribute is set, since I can't find any clause in the WebIDL spec
 	that NativeObject implies NoInterfaceObject.  Support for tests on

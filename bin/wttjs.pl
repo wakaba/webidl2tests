@@ -13,6 +13,7 @@ my $instances;
 my $instances_input;
 my $test_dir_name = 'test';
 my $testset_id;
+my $result_list_url = q<http://suika.fam.cx/gate/test-results/list/>;
 
 GetOptions (
   'idl-file-name=s' => sub {
@@ -33,6 +34,7 @@ GetOptions (
     require JSON;
     $instances = JSON::jsonToObj ($instances_input);
   },
+  'result-list-url=s' => \$result_list_url,
   'test-dir-name=s' => \$test_dir_name,
   'testset-id=s' => \$testset_id,
 ) or die; ## TODO: ...
@@ -44,7 +46,7 @@ mkpath $testset_dir_name;
 
 my $all_tests = [];
 
-my $crash_info = $instances->{_crash};
+my $crash_info = $instances->{_crash} || {};
 delete $instances->{_crash} if $instances;
 
 require Whatpm::WebIDL;
@@ -731,6 +733,9 @@ sub generate_support_files () {
 
 <form method=post accept-charset=utf-8></form>
 
+<p><a href="@{[htescape ($result_list_url.$testset_id)]}/all">See
+result of other browsers</a>
+
 <p>Failed tests:
 <ul id=failed-list></ul>
 
@@ -859,7 +864,7 @@ sub generate_support_files () {
       document.getElementById ('status').firstChild.data = 'Done';
 
       // Submission form
-      form.action = 'http://suika.fam.cx/gate/test-results/list/$testset_id';
+      form.action = '$result_list_url$testset_id';
 
       var i = document.createElement ('p');
       i.innerHTML = '<input name=env-name type=hidden value="">' +
