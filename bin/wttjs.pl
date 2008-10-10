@@ -472,7 +472,11 @@ $test_code
 wttOk ();
 
 } catch (e) {
-  if (!(e instanceof WttFail)) {
+  if (e instanceof WttFail) {
+    //
+  } else if (e instanceof WttSkip) {
+    wttSetStatus ('SKIPPED', e.message);
+  } else {
     throw e;
   }
 }
@@ -556,14 +560,15 @@ sub generate_support_files () {
       document.getElementById ('passed').firstChild.data = ++passedTestsNumber;
       testResults[currentTest.id] = true;
     } else {
-      document.getElementById ('failed').firstChild.data = ++failedTestsNumber;
+      var idPrefix = r.className == 'SKIPPED' ? 'skipped' : 'failed';
+      document.getElementById (idPrefix).firstChild.data = ++failedTestsNumber;
       var li = document.createElement ('li');
       li.innerHTML = '<a>xxxx</a>: <span>xxxx</span>';
       li.firstChild.href = currentTest.fileName;
       li.firstChild.title = currentTest.id;
       li.firstChild.firstChild.data = currentTest.label || currentTest.id;
       li.lastChild.firstChild.data = r.firstChild.data;
-      document.getElementById ('failed-list').appendChild (li);
+      document.getElementById (idPrefix + '-list').appendChild (li);
     }
 
     var i = document.createElement ('p');
@@ -648,7 +653,12 @@ sub generate_support_files () {
     open my $file, '>:utf8', $path or die "$0: $path: $!";
     print $file q[
 function WttFail () {
+  //
 } // WttFail
+
+function WttSkip (message) {
+  this.message = message;
+} // WttSkip
 
 function wttGetGlobal () {
   return window;
@@ -792,7 +802,18 @@ function wttGetInstance (interface, id) {
   
   for (var i in giCodes) {
     if (giCodes[i].id == id) {
-      var v = eval (giCodes[i].code);
+      var v;
+      var message;
+      try {
+        v = eval (giCodes[i].code);
+      } catch (e) {
+        v = null;
+        message = '' + e;
+      }
+      if (!v) {
+        throw new WttSkip ('cannot obtain instance by ' + id +
+                           (message ? ' (' + message + ')' : ''));
+      }
       return v;
     }
   }

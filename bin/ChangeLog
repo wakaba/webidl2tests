@@ -1,5 +1,12 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Skip a test if it tries to get an instance of the
+	interface and then fails, since the purpose of the test is not
+	determining whether the browser implements a way to instantiate
+	the interface properly or not.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Label added to all tests.  Redundant dependency
 	removed.
 
