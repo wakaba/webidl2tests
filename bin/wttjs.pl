@@ -44,6 +44,9 @@ mkpath $testset_dir_name;
 
 my $all_tests = [];
 
+my $crash_info = $instances->{_crash};
+delete $instances->{_crash} if $instances;
+
 require Whatpm::WebIDL;
 my $p = Whatpm::WebIDL::Parser->new;
 my $defs = $p->parse_char_string ($input);
@@ -468,7 +471,10 @@ wttSetStatus ('FAIL', 'script')
 
 try {
 
+wttCheckCrash (globalId);
+
 $test_code
+
 wttOk ();
 
 } catch (e) {
@@ -824,6 +830,23 @@ function wttGetInstance (interface, id) {
     throw new WttFail ();
   }
 } // wttGetInstance
+
+var crashInfo = @{[JSON::objToJson ($crash_info)]};
+function wttCheckCrash (testId) {
+  var entry = crashInfo[testId];
+  if (!entry) return;
+
+  var ua = navigator.userAgent;
+  for (var i = 0; i < entry.length; i++) {
+    var reg = new RegExp (entry[i]);
+    if (ua.match (reg)) {
+      wttSetStatus ('FAIL',
+                    'Skipped because it is known that this test case would crash the browser in use');
+      throw new WttFail ();
+    }
+  }
+} // wttCheckCrash
+
 ] if defined $instances_input;
   }
 } # generate_support_files
