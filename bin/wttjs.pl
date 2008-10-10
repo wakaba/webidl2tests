@@ -48,12 +48,52 @@ require Whatpm::WebIDL;
 my $p = Whatpm::WebIDL::Parser->new;
 my $defs = $p->parse_char_string ($input);
 
+## The transitive closure of the "inherited by" relationship, except
+## for the trivial I->I relationship.
+my $inherited_by = {};
 my @interface = @{$defs->child_nodes};
 while (@interface) {
   my $interface = shift @interface;
   if ($interface->isa ('Whatpm::WebIDL::Interface')) {
+    my @inherits = map {[split /::/, $_]->[-1]} @{$interface->inheritances};
+    $inherited_by->{$_}->{$interface->node_name} = 1 for @inherits;
+  } elsif ($interface->isa ('Whatpm::WebIDL::Module')) {
+    unshift @interface, @{$interface->child_nodes};
+  }
+}
+while (1) {
+  ## NOTE: This is not so good with respect to the computation
+  ## complexity, but it should not affect the performance so much,
+  ## since the number of interfaces is not so many in general.
+  my $changed;
+  for my $a (keys %$inherited_by) {
+    for my $b (keys %{$inherited_by->{$a}}) {
+      for my $c (keys %{$inherited_by->{$b} or {}}) {
+        unless ($inherited_by->{$a}->{$c}) {
+          $inherited_by->{$a}->{$c} = 1;
+          $changed = 1;
+        }
+      }
+    }
+  }
+  last unless $changed;
+}
+
+@interface = @{$defs->child_nodes};
+while (@interface) {
+  my $interface = shift @interface;
+  if ($interface->isa ('Whatpm::WebIDL::Interface')) {
+    next if $interface->is_forward_declaration;
+    next if $interface->has_extended_attribute ('NativeObject');
+
     my $interface_name = $interface->node_name;
     my $interface_id = generate_id ($interface_name, 1);
+
+    my $all_instances = [];
+    for my $i ($interface_name,
+               keys %{$inherited_by->{$interface_name} or {}}) {
+      push @$all_instances, map {[$i, $_]} @{$instances->{$i} or []};
+    }
 
     ## Interface object
     my $has_interface_object;
@@ -106,13 +146,13 @@ while (@interface) {
 
       generate_test
         ($interface_id .
-         '-interface-object-has-instance-host-object-' . $_->{id},
-         qq{var v = wttGetInstance ('$interface_name', '$_->{id}');\n} .
+         '-interface-object-has-instance-host-object-' . $_->[1]->{id},
+         qq{var v = wttGetInstance ('$_->[0]', '$_->[1]->{id}');\n} .
          qq{wttAssertTrue (v instanceof $interface_name, '1');\n},
          depends => [$interface_id . '-interface-object-has-property',
                      $interface_id .
                      '-interface-prototype-object-has-property'])
-          for @{$instances->{$interface_name} or []};
+          for @$all_instances;
           ## NOTE: WebIDL's algorithm, step 5 cases
 
       generate_test
@@ -199,6 +239,26 @@ while (@interface) {
       ## ECMAScript. If more than one superinterface has a given
       ## property, it is implementation specific which one is
       ## accessed. "
+
+      ## ToString
+      if ($interface->has_extended_attribute ('Stringifies')) {
+        generate_test
+          ($interface_id .
+           '-interface-prototype-object-to-string-has-property',
+           qq{wttAssertTrue ('toString' in $interface_name.prototype, '1');\n},
+           depends => [$interface_id .
+                       '-interface-prototype-object-has-property']);
+
+        generate_test
+          ($interface_id . '-interface-prototype-object-to-string-type',
+           qq{wttAssertEquals (typeof ($interface_name.prototype.toString),
+                               'function', 'function');\n},
+           depends => [$interface_id .
+                       '-interface-prototype-object-to-string-has-property']);
+        ## NOTE: There is no reliable way to distinguish a Function
+        ## object from some host object that behaves as if it were a
+        ## Function object, afaict.
+      }
     }
 
     for (@{$interface->get_extended_attribute_nodes ('NamedConstructor')}) {
@@ -227,6 +287,7 @@ while (@interface) {
       ## note above).
     }
 
+    my %has_method;
     for my $def (@{$interface->child_nodes}) {
       if ($def->isa ('Whatpm::WebIDL::Const')) {
         my $const_name = $def->node_name;
@@ -240,34 +301,96 @@ while (@interface) {
                         [$interface_id .
                          '-interface-prototype-object-has-property']]) {
             generate_test
-              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+              ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
                '-has-property',
                qq{wttAssertTrue ('$const_name' in $aaa->[1], '1');\n},
                depends => $aaa->[2]);
             
             generate_test
-              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+              ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
                '-dont-delete',
                qq{wttAssertDontDelete ($aaa->[1], '$const_name', '1');\n},
-               depends => [$interface_id . '-'.$aaa->[0].'-'.
+               depends => [$interface_id . '-'.$aaa->[0].'-const-'.
                            $const_id .'-has-property']);
             
             generate_test
-              ($interface_id . '-'.$aaa->[0].'-' . $const_id .
+              ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
                '-read-only',
                qq{wttAssertReadOnly ($aaa->[1], '$const_name', '1');\n},
-               depends => [$interface_id . '-'.$aaa->[0].'-'.
+               depends => [$interface_id . '-'.$aaa->[0].'-const-'.
                            $const_id .'-has-property']);
 
             generate_test
-              ($interface_id . '-'.$aaa->[0].'-' . $const_id . '-value',
+              ($interface_id . '-'.$aaa->[0].'-const-' . $const_id . '-value',
                qq{wttAssertEquals ($aaa->[1].$const_name, $const_value,
                                    '1');\n},
-               depends => [$interface_id . '-'.$aaa->[0].'-'.
+               depends => [$interface_id . '-'.$aaa->[0].'-const-'.
                            $const_id .'-has-property']);
           }
         }
+      } elsif ($def->isa ('Whatpm::WebIDL::Operation')) {
+        my $method_name = $def->node_name;
+        my $method_id = generate_id ($method_name);
+
+        next if $has_method{$method_name};
+        $has_method{$method_name} = 1;
+
+        generate_test
+          ($interface_id . '-interface-prototype-object-method-' . $method_id .
+           '-has-property',
+           qq{wttAssertTrue ('$method_name' in $interface_name.prototype,
+                             '1');\n},
+           depends => [$interface_id .
+                       '-interface-prototype-object-has-property']);
+        
+        generate_test
+          ($interface_id . '-interface-prototype-object-method-' . $method_id .
+           '-dont-enum',
+           qq{wttAssertDontEnum ($interface_name.prototype, '$method_name',
+                                 '1');\n},
+           depends => [$interface_id . '-interface-prototype-object-method-'.
+                       $method_id .'-has-property']);
+        
+        ## TODO: If there is multiple definitions for the same
+        ## identifier, test whether a TypeError is thrown in case
+        ## arguments are less than the minimum number of arguments for
+        ## the operation.
+      } elsif ($def->isa ('Whatpm::WebIDL::Attribute')) {
+        my $attr_name = $def->node_name;
+        my $attr_id = generate_id ($attr_name);
+
+        for my $i (@$all_instances) {
+          generate_test
+            ($interface_id . '-instance-' . $i->[1]->{id} .
+             '-attr-' . $attr_id . '-has-property',
+             qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+             qq{wttAssertTrue ('$attr_name' in v, '1');\n});
+          
+          generate_test
+            ($interface_id . '-instance-' . $i->[1]->{id} .
+             '-attr-' . $attr_id . '-dont-delete',
+             qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+             qq{wttAssertDontDelete (v, '$attr_name', '1');\n},
+             depends => [$interface_id . '-instance-' . $i->[1]->{id} .
+                         '-attr-' . $attr_id . '-has-property']);
+          
+          if ($def->readonly) {
+            generate_test
+              ($interface_id . '-instance-' . $i->[1]->{id} .
+               '-attr-' . $attr_id . '-read-only',
+               qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+               qq{wttAssertReadOnly (v, '$attr_name', '1');\n},
+               depends => [$interface_id . '-instance-' . $i->[1]->{id} .
+                           '-attr-' . $attr_id . '-has-property']);
+          }
+          
+          ## TODO: "Changes made to the interface prototype objects of
+          ## interfaces implemented by the host object MUST be
+          ## reflected through this object."
+        }
       }
+
+      ## TODO: IndexGetter/NameGetter/IndexSetter/NameSetter
     }
   } elsif ($interface->isa ('Whatpm::WebIDL::Exception')) {
 
@@ -292,6 +415,7 @@ sub generate_id ($$) {
     $s =~ tr/A-Z_/a-z-/;
     return $s;
   } else {
+    $s =~ s/([A-Z]+)$/-@{[lc $1]}/;
     $s =~ s/([A-Z]+)([A-Z])/-@{[lc $1]}-@{[lc $2]}/g;
     $s =~ s/([A-Z])/-@{[lc $1]}/g;
     $s =~ s/^-// if $_[0];
@@ -310,7 +434,7 @@ sub generate_test ($$;%) {
   open my $test_file, '>:utf8', $test_file_name
       or die "$0: $test_file_name: $!";
   print $test_file q[<!DOCTYPE HTML><title>];
-  print $test_file htescape ($test_file_name);
+  print $test_file htescape ($test_id);
   print $test_file qq[</title><script src=wtt.js></script>\n];
   print $test_file qq[<p id=result class=FAIL>FAIL (noscript)</p>\n\n];
   print $test_file qq[<script>

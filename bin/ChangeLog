@@ -1,3 +1,12 @@
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
+	* wttjs.pl: Inheritance support.  [Stringifies] support.
+	Operation support.  Attribute support.
+	(generate_id): Support for method/attribute names end with an
+	uppercase letter.
+	(generate_test): Use test_id instead of file name for the |title|
+	element content.
+
 2008-10-09  Wakaba  <wakaba@suika.fam.cx>
 
 	* wttjs.pl: Interface prototype object's |constructor| property
