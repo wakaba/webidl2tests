@@ -476,6 +476,8 @@ sub generate_support_files () {
 <span id=failed>0</span> failed,
 <span id=skipped>0</span> skipped.</p>
 
+<form method=post accept-charset=utf-8></form>
+
 <p>Failed tests:
 <ul id=failed-list></ul>
 
@@ -491,6 +493,7 @@ sub generate_support_files () {
   document.getElementById ('status').firstChild.data = 'Executing...';
 
   var iframe = document.getElementsByTagName ('iframe')[0];
+  var form = document.forms[0];
 
   var testResults = {};
   var passedTestsNumber = 0;
@@ -536,6 +539,17 @@ sub generate_support_files () {
       li.lastChild.firstChild.data = r.firstChild.data;
       document.getElementById ('failed-list').appendChild (li);
     }
+
+    var i = document.createElement ('p');
+    i.innerHTML = '<input name=test-name type=hidden>' +
+        '<input name=test-label type=hidden>' +
+        '<input name=test-class type=hidden>' +
+        '<input name=test-result type=hidden>';
+    i.childNodes[0].value = currentTest.fileName;
+    i.childNodes[1].value = currentTest.label || '';
+    i.childNodes[2].value = r.className;
+    i.childNodes[3].value = r.firstChild.data;
+    form.appendChild (i);
   } // getTestResult
 
   function nextTest () {
@@ -558,6 +572,18 @@ sub generate_support_files () {
             li.firstChild.firstChild.data = nextTest.id;
             li.lastChild.firstChild.data = dTestId;
             document.getElementById ('skipped-list').appendChild (li);
+
+            var i = document.createElement ('p');
+            i.innerHTML = '<input name=test-name type=hidden>' +
+                '<input name=test-label type=hidden>' +
+                '<input name=test-class type=hidden>' +
+                '<input name=test-result type=hidden>';
+            i.childNodes[0].value = nextTest.fileName;
+            i.childNodes[1].value = nextTest.label || '';
+            i.childNodes[2].value = 'SKIPPED';
+            i.childNodes[3].value = 'skipped (' + dTestId + ')';
+            form.appendChild (i);
+
             skipTest = true;
             break;
           }
@@ -573,10 +599,19 @@ sub generate_support_files () {
       iframe.onreadystatechange = null;
       iframe.onload = null;
       document.getElementById ('status').firstChild.data = 'Done';
+
+      // Submission form
+      form.action = 'http://suika.fam.cx/gate/test-results/list/$testset_id';
+
+      var i = document.createElement ('p');
+      i.innerHTML = '<input name=env-name type=hidden value="">' +
+          '<input type=submit value="Submit this result">';
+      i.firstChild.value = navigator.userAgent;
+      form.appendChild (i);
     }
 
     return true;
-  }
+  } // nextTest
 </script>
 ];
   }

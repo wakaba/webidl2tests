@@ -1,5 +1,9 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Test result submission form added.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Catch exceptions thrown by assignment to a ReadOnly
 	property, to test only whether ReadOnly attribute is set or not.
 
