@@ -674,7 +674,18 @@ function wttAssertReadOnly (object, propName, localId) {
 
   var propValue = object[propName];
 
-  object[propName] = 'abcdefg';
+  try {
+    object[propName] = 'abcdefg';
+  } catch (e) {
+    /* 
+      According to the [[Put]] algorithms of ECMA 262 and WebIDL, assigning
+      a value to a read-only property should not raise an exception.
+      However, since testing the behavior of [[Put]] is not the purpose of
+      this test, we catch any exception thrown by the assignment.
+      Note that it might also catch any exception thrown by non-standard
+      setter extension, if any.
+    */
+  }
   if (object[propName] === 'abcdefg') {
     wttSetStatus ('FAIL', localId + ' (value changed)');
     throw new WttFail ();

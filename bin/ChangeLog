@@ -1,5 +1,10 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Catch exceptions thrown by assignment to a ReadOnly
+	property, to test only whether ReadOnly attribute is set or not.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Inheritance support.  [Stringifies] support.
 	Operation support.  Attribute support.
 	(generate_id): Support for method/attribute names end with an
