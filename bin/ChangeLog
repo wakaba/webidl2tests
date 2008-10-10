@@ -1,5 +1,10 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Label added to all tests.  Redundant dependency
+	removed.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Test result submission form added.
 
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
