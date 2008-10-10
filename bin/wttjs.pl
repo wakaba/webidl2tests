@@ -87,7 +87,6 @@ while (@interface) {
   my $interface = shift @interface;
   if ($interface->isa ('Whatpm::WebIDL::Interface')) {
     next if $interface->is_forward_declaration;
-    next if $interface->has_extended_attribute ('NativeObject');
 
     my $interface_name = $interface->node_name;
     my $interface_id = generate_id ($interface_name, 1);
@@ -140,7 +139,6 @@ while (@interface) {
       ## lack of it (WebIDL allows any possible implementation of
       ## [[Construct]], which implies any exception may be thrown)).
 
-
       ## Interface prototype object
       generate_test
         ($interface_id . '-interface-prototype-object-has-property',
@@ -162,7 +160,7 @@ while (@interface) {
                      '-interface-prototype-object-has-property'],
          label => qq{$interface_name.prototype {ReadOnly}});
 
-      ## Instance object's [[HasInstance]]
+      ## Interface object's [[HasInstance]]
       generate_test
         ($interface_id . '-interface-object-has-instance-non-object',
          qq{wttAssertFalse (null instanceof $interface_name, 'null');\n} .
@@ -420,7 +418,227 @@ while (@interface) {
       ## TODO: IndexGetter/NameGetter/IndexSetter/NameSetter
     }
   } elsif ($interface->isa ('Whatpm::WebIDL::Exception')) {
+    my $interface_name = $interface->node_name;
+    my $interface_id = generate_id ($interface_name, 1);
 
+    my $all_instances = [];
+    push @$all_instances,
+        map {[$interface_name, $_]} @{$instances->{$interface_name} or []};
+    
+    ## Exception interface object
+    my $has_interface_object;
+    unless ($interface->has_extended_attribute ('NoInterfaceObject')) {
+      $has_interface_object = 1;
+
+      generate_test
+        ($interface_id . '-interface-object-has-property',
+         qq{var global = wttGetGlobal ();\n} .
+         qq{wttAssertTrue ('$interface_name' in global, '0');\n},
+         label => qq{$interface_name (exception interface object)});
+      
+      generate_test
+        ($interface_id . '-interface-object-dont-delete',
+         qq{var global = wttGetGlobal ();\n} .
+         qq{wttAssertDontDelete (global, '$interface_name', '1');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{$interface_name {DontDelete}});
+      
+      generate_test
+        ($interface_id . '-interface-object-dont-enum',
+         qq{var global = wttGetGlobal ();\n} .
+         qq{wttAssertDontEnum (global, '$interface_name', '1');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{$interface_name {DontEnum}});
+
+      generate_test
+        ($interface_id . '-interface-object-prototype',
+         qq{var global = wttGetGlobal ();\n} .
+         qq{wttAssertEquals (global.$interface_name.__proto__,
+                             Object.prototype,
+                             'same-as-object-prototype');\n},
+         depends => ['__proto__',
+                     $interface_id . '-interface-object-has-property'],
+         label => qq{$interface_name.[[Prototype]]});
+
+      ## Exception interface prototype object
+      generate_test
+        ($interface_id . '-interface-prototype-object-has-property',
+         qq{wttAssertTrue ('prototype' in $interface_name, '0');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{$interface_name.prototype});
+      
+      generate_test
+        ($interface_id . '-interface-prototype-object-dont-delete',
+         qq{wttAssertDontDelete ($interface_name, 'prototype', '1');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-has-property'],
+         label => qq{$interface_name.prototype {DontDelete}});
+    
+      generate_test
+        ($interface_id . '-interface-prototype-object-read-only',
+         qq{wttAssertReadOnly ($interface_name, 'prototype', '1');\n},
+         depends => [$interface_id .
+                     '-interface-prototype-object-has-property'],
+         label => qq{$interface_name.prototype {ReadOnly}});
+
+      ## Exception interface object's [[HasInstance]]
+      generate_test
+        ($interface_id . '-interface-object-has-instance-non-object',
+         qq{wttAssertFalse (null instanceof $interface_name, 'null');\n} .
+         qq{wttAssertFalse (undefined instanceof $interface_name,
+                            'undefined');\n} .
+         qq{wttAssertFalse (0 instanceof $interface_name, 'number');\n} .
+         qq{wttAssertFalse ("" instanceof $interface_name, 'string');\n},
+         depends => [$interface_id .'-interface-object-has-property'],
+         label => qq{non_object instanceof $interface_name});
+          ## NOTE: WebIDL's algorithm, step 1 cases
+
+      generate_test
+        ($interface_id .
+         '-interface-object-has-instance-host-object-' . $_->[1]->{id},
+         qq{var v = wttGetInstance ('$_->[0]', '$_->[1]->{id}');\n} .
+         qq{wttAssertTrue (v instanceof $interface_name, '1');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{${interface_name}_instance ($_->[1]->{id}) instanceof } .
+             $interface_name)
+          for @$all_instances;
+          ## NOTE: WebIDL's algorithm, step 2 cases
+
+      generate_test
+        ($interface_id . '-interface-object-has-instance-prototype-null',
+         qq{function V () {};\n} .
+         qq{V.prototype = null;\n} .
+         qq{var v = new V ();\n} .
+         qq{wttAssertFalse (v instanceof $interface_name, 'null');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{{[[Prototype]]: null} instanceof $interface_name});
+          ## NOTE: WebIDL's algorithm, step 3 cases
+
+      generate_test
+        ($interface_id . '-interface-object-has-instance-prototype-object',
+         qq{function V () {};\n} .
+         qq{V.prototype = $interface_name.prototype;\n} .
+         qq{var v = new V ();\n} .
+         qq{wttAssertFalse (v instanceof $interface_name, 'level-0');\n} .
+         qq{function W () {};\n} .
+         qq{W.prototype = v;\n} .
+         qq{var w = new W ();\n} .
+         qq{wttAssertTrue (w instanceof $interface_name, 'level-1');\n},
+         depends => [$interface_id . '-interface-object-has-property',
+                     $interface_id .
+                     '-interface-prototype-object-has-property'],
+         label => qq{Object instanceof $interface_name});
+          ## NOTE: WebIDL's algorithm, step 3 cases
+
+      generate_test
+        ($interface_id .
+         '-interface-object-has-instance-prototype-differeent-object',
+         qq{wttAssertFalse ({} instanceof $interface_name, 'object');\n} .
+         qq{wttAssertFalse ((new Date ()) instanceof $interface_name,
+                            'date');\n} .
+         qq{wttAssertFalse ([] instanceof $interface_name, 'array');\n},
+         depends => [$interface_id . '-interface-object-has-property'],
+         label => qq{builtin instanceof $interface_name});
+          ## NOTE: WebIDL's algorithm, step 3 cases
+    }
+
+    if ($has_interface_object) {
+      my $mod = $interface->parent_node;
+      if ($mod and $mod->isa ('Whatpm::WebIDL::Module')) {
+        my $has_consts;
+        for (@{$mod->get_extended_attribute_nodes ('ExceptionConsts')}) {
+          if ($_->value eq $interface_name) {
+            $has_consts = 1;
+            last;
+          }
+        }
+        
+        if ($has_consts) {
+          for my $def (@{$mod->child_nodes}) {
+            if ($def->isa ('Whatpm::WebIDL::Const')) {
+              my $const_name = $def->node_name;
+              my $const_value = $def->value_text;
+              my $const_id = generate_id ($const_name, 2);
+              
+              for my $aaa (['interface-object', $interface_name, []],
+                           ['interface-prototype-object',
+                            $interface_name.'.prototype',
+                            [$interface_id .
+                             '-interface-prototype-object-has-property']]) {
+                generate_test
+                  ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
+                   '-has-property',
+                   qq{wttAssertTrue ('$const_name' in $aaa->[1], '1');\n},
+                   depends => $aaa->[2],
+                   label => qq{$aaa->[1].$const_name});
+                
+                generate_test
+                  ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
+                   '-dont-delete',
+                   qq{wttAssertDontDelete ($aaa->[1], '$const_name', '1');\n},
+                   depends => [$interface_id . '-'.$aaa->[0].'-const-'.
+                               $const_id .'-has-property'],
+                   label => qq{$aaa->[1].$const_name {DontDelete}});
+                
+                generate_test
+                  ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
+                   '-read-only',
+                   qq{wttAssertReadOnly ($aaa->[1], '$const_name', '1');\n},
+                   depends => [$interface_id . '-'.$aaa->[0].'-const-'.
+                               $const_id .'-has-property'],
+                   label => qq{$aaa->[1].$const_name {ReadOnly}});
+                
+                generate_test
+                  ($interface_id . '-'.$aaa->[0].'-const-' . $const_id .
+                   '-value',
+                   qq{wttAssertEquals ($aaa->[1].$const_name, $const_value,
+                                       '1');\n},
+                   depends => [$interface_id . '-'.$aaa->[0].'-const-'.
+                               $const_id .'-has-property'],
+                   label => qq{$aaa->[1].$const_name value});
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for my $def (@{$interface->child_nodes}) {
+      if ($def->isa ('Whatpm::WebIDL::ExceptionMember')) {
+        my $attr_name = $def->node_name;
+        my $attr_id = generate_id ($attr_name);
+
+        for my $i (@$all_instances) {
+          generate_test
+            ($interface_id . '-instance-' . $i->[1]->{id} .
+             '-attr-' . $attr_id . '-has-property',
+             qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+             qq{wttAssertTrue ('$attr_name' in v, '1');\n},
+             label => qq{${interface_name}_instance ($i->[1]->{id}).$attr_name});
+        
+          generate_test
+            ($interface_id . '-instance-' . $i->[1]->{id} .
+             '-attr-' . $attr_id . '-dont-delete',
+             qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+             qq{wttAssertDontDelete (v, '$attr_name', '1');\n},
+             depends => [$interface_id . '-instance-' . $i->[1]->{id} .
+                         '-attr-' . $attr_id . '-has-property'],
+             label => qq{${interface_name}_instance ($i->[1]->{id}).$attr_name {DontDelete}});
+        }
+      }
+    }
+
+    for my $i (@$all_instances) {
+      generate_test
+        ($interface_id . '-instance-' . $i->[1]->{id} . '-prototype',
+         qq{var v = wttGetInstance ('$i->[0]', '$i->[1]->{id}');\n} .
+         qq{wttAssertEquals (v.__proto__, $interface_name.prototype,
+                             'same-as-interface-prototype');\n},
+         depends => ['__proto__',
+                     $interface_id .
+                     '-interface-prototype-object-has-property'],
+         label => qq{${interface_name}_instance ($i->[1]->{id}).[[Prototype]]});
+    }
   } elsif ($interface->isa ('Whatpm::WebIDL::Module')) {
     unshift @interface, @{$interface->child_nodes};
   }
@@ -567,7 +785,9 @@ sub generate_support_files () {
       testResults[currentTest.id] = true;
     } else {
       var idPrefix = r.className == 'SKIPPED' ? 'skipped' : 'failed';
-      document.getElementById (idPrefix).firstChild.data = ++failedTestsNumber;
+      document.getElementById (idPrefix).firstChild.data
+          = (r.className == 'SKIPPED' ?
+                 ++skippedTestsNumber : ++failedTestsNumber);
       var li = document.createElement ('li');
       li.innerHTML = '<a>xxxx</a>: <span>xxxx</span>';
       li.firstChild.href = currentTest.fileName;

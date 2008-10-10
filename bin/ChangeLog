@@ -1,5 +1,16 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Test interface object even if NativeObject extended
+	attribute is set, since I can't find any clause in the WebIDL spec
+	that NativeObject implies NoInterfaceObject.  Support for tests on
+	exception interface objects and exception host objects.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
+	* wttjs.pl: Some of skipped tests were counted as failed.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Don't execute a test if it is known a priori to crash
 	the browser.
 
