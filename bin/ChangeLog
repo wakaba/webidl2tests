@@ -1,3 +1,10 @@
+2008-10-11  Wakaba  <wakaba@suika.fam.cx>
+
+	* Makefile: New file.
+
+	* wttjs.pl: Documentation added.  Path names of manakai/Whatpm
+	library is removed.  "--help" option added.
+
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
 	* wttjs.pl: Don't test attribute's ReadOnly-ness if the

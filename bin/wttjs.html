@@ -1,0 +1,219 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>wttjs.pl - WebIDL ECMAScript Binding Test Suite Generator</title>
+<link rel="stylesheet" href="http://suika.fam.cx/www/style/html/pod.css" type="text/css" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:wakaba@suika.fam.cx" />
+</head>
+
+<body>
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#arguments">ARGUMENTS</a></li>
+	<li><a href="#dependency">DEPENDENCY</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#license">LICENSE</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>wttjs.pl - WebIDL ECMAScript Binding Test Suite Generator</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  $ perl wttjs.pl \
+        --idl-file-name input.idl \
+        --instances-file-name input.json \
+        --test-dir-name output-dir/ \
+        --testset-id testname</pre>
+<pre>
+  $ perl wttjs.pl --help</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The script <code>wttjs.pl</code> generates a set of test cases for the
+conformance of a Web browser's DOM implementation, with regard to a
+set of interfaces described by a WebIDL fragment.</p>
+<p>For more information, see the readme document
+<a href="http://suika.fam.cx/www/webidl2tests/doc/readme">http://suika.fam.cx/www/webidl2tests/doc/readme</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="arguments">ARGUMENTS</a></h1>
+<p>This script accepts command-line arguments in the
+<a href="http://suika.fam.cx/www/markup/html/whatpm/Getopt/Long.html">Getopt::Long</a> style.  Any argument can be specified at
+most once.</p>
+<dl>
+<dt><strong><a name="help" class="item"><code>--help</code></a></strong>
+
+<dd>
+<p>Show the help on the command-line arguments and exit the script.</p>
+</dd>
+</li>
+<dt><strong><a name="idl" class="item"><code>--idl-file-name file-name.idl</code> (<strong>REQUIRED</strong>)</a></strong>
+
+<dd>
+<p>The name or path of the file that contains the IDL fragment that
+defines a set of interfaces and exceptions to be tested against.</p>
+</dd>
+<dd>
+<p>If this argument is not specified, if the specified file is not found,
+or if the file cannot be read due to some I/O error, the script would
+exit with an error message.</p>
+</dd>
+<dd>
+<p>The file must be encoded in UTF-8 (Perl's <code>utf-8</code> encoding).
+Otherwise, the result test cases might be broken.</p>
+</dd>
+<dd>
+<p>The file must contain a syntactically valid IDL fragment.  Any failure
+to conform to the WebIDL syntax would be reported to the standard
+error output.  Such errors are handled by the CSS-like
+forward-compatible parsing rule as implemented by the
+<a href="http://suika.fam.cx/www/markup/html/whatpm/Whatpm/WebIDL.html">Whatpm::WebIDL</a> parser.</p>
+</dd>
+<dd>
+<p>Though the content of the file don't have to be a conforming IDL
+fragment, the result test cases might be broken if it is not.  It is
+encouraged to check the conformance of the input IDL fragment by a
+conformance checker, e.g. WebHACC
+<a href="http://suika.fam.cx/gate/2007/html/cc/">http://suika.fam.cx/gate/2007/html/cc/</a>.</p>
+</dd>
+</li>
+<dt><strong><a name="json" class="item"><code>--instances-file-name file-name.json</code> (Default: No instance generation)</a></strong>
+
+<dd>
+<p>The name or path of the file that contains supplement information on
+interfaces and exceptions defined in the IDL fragment.</p>
+</dd>
+<dd>
+<p>If the specified file is not found, or if the file cannot be read due
+to some I/O error, the script would exit with an error message.</p>
+</dd>
+<dd>
+<p>The file must be encoded in UTF-8 (Perl's <code>utf-8</code> encoding).
+Otherwise, the file might be considered as broken, or the result test
+cases might be broken.</p>
+</dd>
+<dd>
+<p>The file must contain a JSON representation of a data structure
+described in the readme document.  If the content is not valid as
+JSON, then the script would exit with an error message.  If the
+content does not encode the data structure specified in the readme
+document, the script might exit with a Perl script execution error.
+Even when no Perl error stops the script, the result test cases might
+be broken.</p>
+</dd>
+<dd>
+<p>If this argument is not specified, then it is assumed that no
+additional information is available.</p>
+</dd>
+</li>
+<dt><strong><a name="test_dir_name_path_to_dir_default_tests" class="item"><code>--test-dir-name path-to-dir/</code> (Default: <code>./tests/</code>)</a></strong>
+
+<dd>
+<p>The name or path of the directory, in which the directory for the test
+files is created.</p>
+</dd>
+<dd>
+<p>The default value that is used when this argument is not specified is
+<code>./tests/</code>.</p>
+</dd>
+<dd>
+<p>All files generated by this script is put into the directory
+<code>test-dir-name/testset-id/</code>, where <em>test-dir-name</em> is the
+value specified by the <code>--test-dir-name</code> argument and <em>testset-id</em>
+is the value specified by the <code>--testset-id</code> argument.  If there is
+no such a directory, then it is created by the script.</p>
+</dd>
+</li>
+<dt><strong><a name="id" class="item"><code>--testset-id id</code> (<strong>REQUIRED</strong>)</a></strong>
+
+<dd>
+<p>The identifier of the test suite.</p>
+</dd>
+<dd>
+<p>If this argument is not specified, the script would exit with an error
+message.</p>
+</dd>
+<dd>
+<p>Though any value can be specified as identifier, it should be a string
+consist of characters <code>a</code>..<code>z</code>, <code>0</code>..<code>9</code>, and <code>-</code> only, with no
+leading <code>-</code> character, for filesystem safety and compatibility with
+the test result summary script (see the readme document).</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="dependency">DEPENDENCY</a></h1>
+<p>This script, in addition to Perl 5.8.* or later, requires the
+following modules:</p>
+<dl>
+<dt><strong><a name="json_json" class="item"><em>JSON</em></a></strong>
+
+<dd>
+<p>A JSON parser and serializer, which is available from CPAN.</p>
+</dd>
+<dd>
+<p>To install the <em>JSON</em> module from the CPAN, type:</p>
+</dd>
+<dd>
+<pre>
+  # perl -MCPAN -eshell
+  cpan&gt; install JSON</pre>
+</dd>
+</li>
+<dt><strong><a name="whatpm_webidl_whatpm_webidl" class="item"><a href="http://suika.fam.cx/www/markup/html/whatpm/Whatpm/WebIDL.html">Whatpm::WebIDL</a></a></strong>
+
+<dd>
+<p>A WebIDL parser and object model implementation, which is part of the
+Whatpm package <a href="http://suika.fam.cx/www/markup/html/whatpm/readme">http://suika.fam.cx/www/markup/html/whatpm/readme</a>.</p>
+</dd>
+</li>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>Readme <a href="http://suika.fam.cx/www/webidl2tests/readme">http://suika.fam.cx/www/webidl2tests/readme</a>.</p>
+<p>Web IDL specification, revision 1.96 (3 September 2008 Editor's Draft)
+<a href="http://dev.w3.org/cvsweb/~checkout~/2006/webapi/WebIDL/Overview.html?rev=1.96&content-type=text/html;%20charset=utf-8">http://dev.w3.org/cvsweb/~checkout~/2006/webapi/WebIDL/Overview.html</a></p>
+<p><a href="http://suika.fam.cx/www/markup/html/whatpm/Whatpm/WebIDL.html">Whatpm::WebIDL</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Wakaba &lt;<a href="mailto:w@suika.fam.cx">w@suika.fam.cx</a>&gt;</p>
+<p>
+</p>
+<hr />
+<h1><a name="license">LICENSE</a></h1>
+<p>Copyright 2008 Wakaba &lt;<a href="mailto:w@suika.fam.cx">w@suika.fam.cx</a>&gt;</p>
+<p>This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.</p>
+
+</body>
+
+</html>
