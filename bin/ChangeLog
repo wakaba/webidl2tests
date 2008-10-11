@@ -1,5 +1,10 @@
 2008-10-10  Wakaba  <wakaba@suika.fam.cx>
 
+	* wttjs.pl: Don't test attribute's ReadOnly-ness if the
+	[PutForwards] extended attribute is set.
+
+2008-10-10  Wakaba  <wakaba@suika.fam.cx>
+
 	* wttjs.pl: Make result page URL configurable.  Don't generate
 	invalid JavaScript code even when there is no crash information
 	available.  Link to the result page.

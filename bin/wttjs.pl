@@ -400,7 +400,8 @@ while (@interface) {
                          '-attr-' . $attr_id . '-has-property'],
              label => qq{${interface_name}_instance ($i->[1]->{id}).$attr_name {DontDelete}});
           
-          if ($def->readonly) {
+          if ($def->readonly and
+              not $def->has_extended_attribute ('PutForwards')) {
             generate_test
               ($interface_id . '-instance-' . $i->[1]->{id} .
                '-attr-' . $attr_id . '-read-only',
