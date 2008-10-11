@@ -1215,6 +1215,9 @@ To install the L<JSON|JSON> module from the CPAN, type:
 A WebIDL parser and object model implementation, which is part of the
 Whatpm package L<http://suika.fam.cx/www/markup/html/whatpm/readme>.
 
+Note that L<Whatpm::WebIDL|Whatpm::WebIDL> does not depend on any
+other module.
+
 =back
 
 =head1 SEE ALSO
@@ -1240,4 +1243,4 @@ it under the same terms as Perl itself.
 
 =cut 
 
-## $Date: 2008/10/11 08:00:26 $
+## $Date: 2008/10/11 08:05:37 $
