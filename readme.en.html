@@ -1,0 +1,334 @@
+<!DOCTYPE HTML>
+<html lang=en>
+<title>wttjs &mdash; WebIDL ECMAScript Binding Test Suite Generator</title>
+<link rel=stylesheet href="http://suika.fam.cx/www/style/html/xhtml">
+<link rel=license href="#license">
+
+<h1>wttjs &mdash; WebIDL ECMAScript Binding Test Suite Generator</h1>
+
+<div class=section id=intro>
+<h2>What is this?</h2>
+
+<p><dfn>wttjs</dfn> is a tool to generate automated test suite from an
+IDL fragment conforming to the WebIDL specification.  It generates
+test cases to check whether the DOM ECMAScript binding of a Web
+browser conforms to the <a href="#standards">Web IDL specification</a>
+and the given IDL fragment, as well as a test harness for the
+automated testing against the generated test cases.
+
+<p>In addition, a test result submission script is available.  Test
+results can be submitted from the test harness.  The browser support
+matrix for the test suite is automatically generated from the
+submitted results.
+
+</div>
+
+<div class=section id=usage>
+<h2>Usage</h2>
+
+<ol>
+
+<li id=prepare-idl>
+
+<p>First, prepare an IDL fragment that represents interfaces and
+exceptions that should be implemented by Web browsers.  The IDL
+fragment must conform to the <a href="#standards">Web IDL
+specification</a>.
+
+<p>Ensure that the IDL fragment is conforming.  <em>A broken input
+might generate broken test cases.</em> Use conformance checker such as
+<a
+href="http://suika.fam.cx/www/markup/html/whatpm/readme">WebHACC</a>
+to detect any possible error.
+
+<li id=prepare-json>
+
+<p>Prepare a JSON file that contains supplemental information on
+interfaces and exceptions to be tested.  The JSON file can contain two
+kinds of information: <a href="#instantiate">instantiation
+instructions</a> and <a href="#crash">crash data</a>.
+
+<p><dfn id=instantiate>Instantiation instructions</dfn>: Since an IDL
+fragment does not describe possible ways to instantiate interfaces or
+exceptions defined in the fragment, it is necessary to tell the script
+how to create host objects and host exception objects implementing
+those interfaces and exceptions.
+
+<p>The JSON file can contain instantiation instruction data as follows:
+<pre class="json syntax code"><code>
+{
+  "<var>InterfaceName</var>": [
+    {
+      "id": "<var>create-object-1</var>",
+      "code": "<var>code.to.createObject (1);</var>"
+    }
+    <var>, ...</var>
+  ]
+  <var>, ...</var>
+}
+</code></pre>
+
+<p>... where <var>InterfaceName</var> is the name of the interface or
+exception as used in the ECMAScript binding,
+<var>create-object-1</var> is the identifier that distinguish
+different ways to create an object, and <var>code.to.createObject
+(1);</var> is a right-hand part of ECMAScript assignment statement to
+create an object that implements the interface or exception.  Note
+that the identifier (i.e. <var>create-object-1</var>) must be unique
+for an interface or exception.  It must also be unique globally,
+except when the code (i.e. <var>code.to.createObject (1);</var>) is
+not different each other.
+
+<p>For example, the JSON file for an IDL fragment that contains the
+definition for the <code>NodeList</code> interface would contain:
+
+<pre class="example json code"><code>
+{
+  "NodeList": [
+    {
+      "id": "child-nodes",
+      "code": "document.createElement ('p').childNodes;",
+    },
+    {
+      "id": "get-elements",
+      "code": "document.getElementsByTagName ('*');"
+    }
+  ]
+}
+</code></pre>
+
+<p>If the instantiation instruction for an interface or exception is
+not provided, then any test case that requires an instance of the
+interface or exception will not be generated.
+
+<p><dfn id=crash>Crash data</dfn>: A test case sometimes crashes a Web
+browser.  Since the existence of a crashing test case prevents the use
+of automated test harness, a way to avoid execution of test case that
+is known to crash a certain browser is provided.
+
+The crash data can be put into the JSON file with the
+<code>_crash</code> key as follows:
+
+<pre class="json syntax code"><code>
+{
+  <var>... instantiation instruction ...</var>
+  "_crash": {
+    "<var>test-case-id</var>": [
+      "<var>UserAgentNameRegularExpression</var>"
+      <var>, ...</var>
+    ]
+    <var>, ...</var>
+  }
+}
+</code></pre>
+
+<p>... where <var>test-case-id</var> is the identifier of the relevant
+test case (i.e. the file name of the test case, except for the
+<code>.html</code> extension) and
+<var>UserAgentNameRegularExpression</var> is an ECMAScript regular
+expression, which will be evaluated by ECMAScript 
+<code>new RegExp (<var>regexp</var>)</code> constructor, representing
+<code>User-Agent</code> strings of Web browsers that are known to
+crash.
+
+<li id=execute-wttjs>
+
+<p>Then, generate the test files by executing the
+<code>wttjs.pl</code> script as follows:
+
+<pre>
+  $ <kbd>perl wttjs.pl \
+        --idl-file-name <var>input.idl</var> \
+        --instances-file-name <var>input.json</var> \
+        --test-dir-name <var>output-dir/</var> \
+        --testset-id <var>testname</var></kbd>
+</pre>
+
+<p>... where <var>input.idl</var> is the name of the IDL fragment file
+prepared in <a href="#prepare-idl">Step 1</a>, <var>input.json</var>
+is the name of the JSON file prepared in <a href="#prepare-json">Step
+2</a>, <var>output-dir/</var> is the name of the directory in which a
+directory for the test files is created, and <var>testname</var> is a
+short identifier for the test suite.  For more information on
+command-line arguments, see <a href="bin/wttjs.html">the documentation
+for the <code>wttjs.pl</code> script</a>.
+
+<li>
+
+<p>At this time, there should be a set of test files for the IDL
+fragment, in the directory specified as the command-line argument.
+
+<p>Open <code>all.html</code> in the set by a Web browser that is to
+be tested.  The test is automatically started and the progress is
+shown in the page until all the tests are done.
+
+<li id=test-done>
+
+<p>Examine the test results.  Lists of failed tests and skipped tests
+are shown in the page, as well as the numbers of passed, failed, and
+skipped tests.
+
+<p>The test result can be submitted to the <a href="#results">test
+result form</a> using a submission button that appears in the page.
+
+</ol>
+
+</div>
+
+<div class=section id=results>
+<h2>Test results</h2>
+
+<p>Test results can be submitted so that results of Web browsers can
+be compared.
+
+<p>A result table can be prepared for each test suite.  To create a
+table, access <code
+class=uri>&lt;http://suika.fam.cx/gate/test-results/list/<var>testset-id</var>/info></code>,
+where <var>testset-id</var> is the identifier of the test suite (the
+one <a href="#execute-wttjs">specified</a> to the
+<code>wttjs.pl</code> script) and fill in the form.
+
+<p>Then, submit test results using <a href="#test-done">the submission
+button in the test harness</a>.
+
+<p>Finally, access <code
+class=uri>&lt;http://suika.fam.cx/gate/test-results/list/<var>testset-id</var>/all></code>,
+which lists the result of various browsers.
+
+<p>Note that the source code of the server-side script for the test
+result submission is also <a href="#download">available</a>.
+
+</div>
+
+<div class=section id=standards>
+<h2>Supported standards</h2>
+
+<p>This script supports:
+
+<ul>
+
+<li>ECMA 262 Third Edition.
+
+<li><a
+href="http://dev.w3.org/cvsweb/~checkout~/2006/webapi/WebIDL/Overview.html?rev=1.96&amp;content-type=text/html;%20charset=utf-8">Web
+IDL specification, revision 1.96 (3 September 2008 Editor's Draft)</a>.
+
+</ul>
+
+<p>Note that the <code>wttjs.pl</code> cannot generate tests for all
+WebIDL interface/exception constraints.  For example, whether an
+attribute returns a value of IDL type <code>long</code> or not is
+<em>not</em> tested.  Likewise, whether an attribute with extended
+attribute <code>[Null=Empty]</code> really coverts <code>null</code>
+to an empty string is <em>not</em> tested, either.  Therefore,
+<em>passing all tests generated by the <code>wttjs.pl</code> script
+does not necessarily mean the implementation is conforming</em>.
+
+</div>
+
+<div class=section id=download>
+<h2>Download</h2>
+
+<p>Latest version of scripts are available via the CVS repository: 
+
+<ul>
+
+<li><a
+href="http://suika.fam.cx/gate/cvs/webroot/www/webidl2tests/"><code>wttjs.pl</code>:
+<code>webroot/www/webidl2tests/</code></a> (<a
+href="http://suika.fam.cx/gate/cvs/webroot/www/webidl2tests/webidl2tests.tar.gz?tarball=1">download
+tarball</a>).
+
+<li><a
+href="http://suika.fam.cx/gate/cvs/webroot/gate/test-results/">result
+submission: <code>webroot/gate/test-results/</code></a> (<a
+href="http://suika.fam.cx/gate/cvs/webroot/gate/test-results/test-results.tar.gz?tarball=1">download
+tarball</a>).
+
+</ul>
+
+
+</div>
+
+<div class=section id=dependency>
+<h2>Dependency</h2>
+
+<p>For <code>wttjs.pl</code>: Perl5 or later, <a
+href="http://suika.fam.cx/www/markup/html/whatpm/readme">Whatpm</a>,
+and the <code>JSON</code> module.  See <a
+href="bin/wttjs.html#dependency">the document</a> for details.
+
+<p>For the test result script: CGI-enabled HTTP server, Perl5 or
+later, and <code>Message::CGI::HTTP</code> and
+<code>Message::DOM::DOMImplementation</code> modules from the <a
+href="http://suika.fam.cx/www/manakai-core/doc/web/">manakai-core</a>
+package.
+
+</div>
+
+<div class=section id=example>
+<h2>Examples</h2>
+
+<ul>
+
+<li><a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/webdomcore-20081008/all.html">Web
+DOM Core WebIDL Conformance</a> (<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/webdomcore-20081008.idl">IDL</a>,
+<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/webdomcore.json">JSON</a>)
+&mdash; <a
+href="http://suika.fam.cx/gate/test-results/list/webdomcore-20081008/all">Result
+Table</a>
+
+<li><a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/xhr2-20081006/all.html"><code>XMLHttpRequest</code>
+Level 2 WebIDL Conformance</a> (<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/xhr2-20081006.idl">IDL</a>,
+<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/xhr.json">JSON</a>)
+&mdash; <a
+href="http://suika.fam.cx/gate/test-results/list/xhr2-20081006/all">Result
+Table</a>
+
+<li><a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/html5-r2321/all.html">HTML5
+WebIDL Conformance</a> (<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/html5-r2321.idl">IDL</a>,
+<a
+href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/html.json">JSON</a>
+<em>(incomplete)</em>) &mdash; <a
+href="http://suika.fam.cx/gate/test-results/list/html5-r2321/all">Result
+Table</a>
+
+</ul>
+
+</div>
+
+<div class=section id=author>
+<h2>Author</h2>
+
+<p><a href="http://suika.fam.cx/~wakaba/who?" rel=author>Wakaba</a>.
+
+</div>
+
+<div class=section id=license>
+<h2>License</h2>
+
+<p>License of the <em>scripts and documentations</em> (not including
+generated files) is as follows:
+
+<blockquote>
+<p>Copyright 2008 <a
+href="http://suika.fam.cx/~wakaba/who?">Wakaba</a> <code
+class=mail>&lt;<a
+href="mailto:w@suika.fam.cx">w@suika.fam.cx</a>></code>
+
+<p>This is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+</blockquote>
+
+<p>Note that you may distribute files you generate by these scripts in
+any license as you like.
+
+</div>

@@ -1105,7 +1105,7 @@ conformance of a Web browser's DOM implementation, with regard to a
 set of interfaces described by a WebIDL fragment.
 
 For more information, see the readme document
-L<http://suika.fam.cx/www/webidl2tests/doc/readme>.
+L<http://suika.fam.cx/www/webidl2tests/readme>.
 
 =head1 ARGUMENTS
 
@@ -1240,4 +1240,4 @@ it under the same terms as Perl itself.
 
 =cut 
 
-## $Date: 2008/10/11 05:37:30 $
+## $Date: 2008/10/11 08:00:26 $
