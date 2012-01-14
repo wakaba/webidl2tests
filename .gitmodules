@@ -1,0 +1,3 @@
+[submodule "modules/manakai"]
+	path = modules/manakai
+	url = git://github.com/wakaba/manakai.git
