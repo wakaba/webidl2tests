@@ -4,6 +4,9 @@ use strict;
 use Getopt::Long;
 use File::Path qw/mkpath/;
 
+use FindBin;
+use lib "$FindBin::Bin/../modules/manakai/lib";
+
 my $input;
 my $instances;
 my $instances_input;
@@ -1218,6 +1221,12 @@ Whatpm package L<http://suika.fam.cx/www/markup/html/whatpm/readme>.
 Note that L<Whatpm::WebIDL|Whatpm::WebIDL> does not depend on any
 other module.
 
+If you are using the Git version, the manakai repository is found in
+the C<modules/manakai> directory as a submodule, so you only have to
+clone it by:
+
+  $ git submodule update --init
+
 =back
 
 =head1 SEE ALSO
@@ -1236,11 +1245,9 @@ Wakaba <w@suika.fam.cx>
 
 =head1 LICENSE
 
-Copyright 2008 Wakaba <w@suika.fam.cx>
+Copyright 2008-2011 Wakaba <w@suika.fam.cx>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut 
-
-## $Date: 2008/10/11 08:05:37 $
