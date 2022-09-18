@@ -1,10 +1,18 @@
-POD2HTML = pod2html --css "http://suika.fam.cx/www/style/html/pod.css" \
-  --htmlroot "http://suika.fam.cx/www/markup/html/whatpm"
+P2H = ../local/p2h
+CURL = curl
 
-all: wttjs.html
+all: build
 
-%.html: %.pl
-	$(POD2HTML) $< > $@
+build: wttjs.html
+
+$(P2H): ../local
+	$(CURL) -sSfL https://raw.githubusercontent.com/manakai/manakai.github.io/master/p2h > $@
+	chmod u+x $@
+
+../local:
+	mkdir -p ../local
+
+%.html: %.pl $(P2H)
+	$(P2H) webidl2tests $< > $@
 
 ## License: Public Domain.
-## $Date: 2008/10/11 05:37:30 $

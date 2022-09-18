@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang=en>
 <title>wttjs &mdash; WebIDL ECMAScript Binding Test Suite Generator</title>
-<link rel=stylesheet href="http://suika.fam.cx/www/style/html/xhtml">
+<link rel=stylesheet href="https://suika.suikawiki.org/www/style/html/xhtml">
 <link rel=license href="#license">
 
 <h1>wttjs &mdash; WebIDL ECMAScript Binding Test Suite Generator</h1>
@@ -40,7 +40,7 @@ specification</a>.
 
 <p>Ensure that the IDL fragment is conforming.  <em>A broken input
 might generate broken test cases.</em> Use conformance checker such as
-<a href="http://suika.fam.cx/gate/2007/html/cc/">WebHACC</a> to detect
+<a href="https://suika.suikawiki.org/gate/2007/html/cc/">WebHACC</a> to detect
 any possible error.
 
 <li id=prepare-json>
@@ -185,7 +185,7 @@ be compared.
 
 <p>A result table can be prepared for each test suite.  To create a
 table, access <code
-class=uri>&lt;http://suika.fam.cx/gate/test-results/list/<var>testset-id</var>/info></code>,
+class=uri>&lt;https://suika.suikawiki.org/gate/test-results/list/<var>testset-id</var>/info></code>,
 where <var>testset-id</var> is the identifier of the test suite (the
 one <a href="#execute-wttjs">specified</a> to the
 <code>wttjs.pl</code> script) and fill in the form.
@@ -194,7 +194,7 @@ one <a href="#execute-wttjs">specified</a> to the
 button in the test harness</a>.
 
 <p>Finally, access <code
-class=uri>&lt;http://suika.fam.cx/gate/test-results/list/<var>testset-id</var>/all></code>,
+class=uri>&lt;https://suika.suikawiki.org/gate/test-results/list/<var>testset-id</var>/all></code>,
 which lists the result of various browsers.
 
 <p>Note that the source code of the server-side script for the test
@@ -233,7 +233,7 @@ does not necessarily mean the implementation is conforming</em>.
 
 <p>Latest version of the test generation script,
 <code>wttjs.pl</code>, is available in the Git repository (<a
-href="http://suika.fam.cx/gate/git/wi/web/webidl2tests.git/tree">Suika</a>
+href="https://suika.suikawiki.org/gate/git/wi/web/webidl2tests.git/tree">Suika</a>
 / <a href="https://github.com/wakaba/webidl2tests">GitHub</a>).
 
 
@@ -244,16 +244,16 @@ via the CVS repository:
 
 <!--
 <li><a
-href="http://suika.fam.cx/gate/cvs/webroot/www/webidl2tests/"><code>wttjs.pl</code>:
+href="https://suika.suikawiki.org/gate/cvs/webroot/www/webidl2tests/"><code>wttjs.pl</code>:
 <code>webroot/www/webidl2tests/</code></a> (<a
-href="http://suika.fam.cx/gate/cvs/webroot/www/webidl2tests/webidl2tests.tar.gz?tarball=1">download
+href="https://suika.suikawiki.org/gate/cvs/webroot/www/webidl2tests/webidl2tests.tar.gz?tarball=1">download
 tarball</a>).
 -->
 
 <li><a
-href="http://suika.fam.cx/gate/cvs/webroot/gate/test-results/">result
+href="https://suika.suikawiki.org/gate/cvs/webroot/gate/test-results/">result
 submission: <code>webroot/gate/test-results/</code></a> (<a
-href="http://suika.fam.cx/gate/cvs/webroot/gate/test-results/test-results.tar.gz?tarball=1">download
+href="https://suika.suikawiki.org/gate/cvs/webroot/gate/test-results/test-results.tar.gz?tarball=1">download
 tarball</a>).
 
 </ul>
@@ -264,14 +264,14 @@ tarball</a>).
 <h2>Dependency</h2>
 
 <p>For <code>wttjs.pl</code>: Perl5 or later, <a
-href="http://suika.fam.cx/www/markup/html/whatpm/readme">Whatpm</a>,
+href="https://suika.suikawiki.org/www/markup/html/whatpm/readme">Whatpm</a>,
 and the <code>JSON</code> module.  See <a
 href="bin/wttjs.html#dependency">the document</a> for details.
 
 <p>For the test result script: CGI-enabled HTTP server, Perl5 or
 later, and <code>Message::CGI::HTTP</code> and
 <code>Message::DOM::DOMImplementation</code> modules from the <a
-href="http://suika.fam.cx/www/manakai-core/doc/web/">manakai-core</a>
+href="https://suika.suikawiki.org/www/manakai-core/doc/web/">manakai-core</a>
 package.
 
 </div>
@@ -282,33 +282,33 @@ package.
 <ul>
 
 <li><a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/webdomcore-20081008/all.html">Web
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/tests/webdomcore-20081008/all.html">Web
 DOM Core WebIDL Conformance</a> (<a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/webdomcore-20081008.idl">IDL</a>,
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/webdomcore-20081008.idl">IDL</a>,
 <a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/webdomcore.json">JSON</a>)
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/webdomcore.json">JSON</a>)
 &mdash; <a
-href="http://suika.fam.cx/gate/test-results/list/webdomcore-20081008/all">Result
+href="https://suika.suikawiki.org/gate/test-results/list/webdomcore-20081008/all">Result
 Table</a>
 
 <li><a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/xhr2-20081006/all.html"><code>XMLHttpRequest</code>
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/tests/xhr2-20081006/all.html"><code>XMLHttpRequest</code>
 Level 2 WebIDL Conformance</a> (<a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/xhr2-20081006.idl">IDL</a>,
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/xhr2-20081006.idl">IDL</a>,
 <a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/xhr.json">JSON</a>)
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/xhr.json">JSON</a>)
 &mdash; <a
-href="http://suika.fam.cx/gate/test-results/list/xhr2-20081006/all">Result
+href="https://suika.suikawiki.org/gate/test-results/list/xhr2-20081006/all">Result
 Table</a>
 
 <li><a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/tests/html5-r2321/all.html">HTML5
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/tests/html5-r2321/all.html">HTML5
 WebIDL Conformance</a> (<a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/html5-r2321.idl">IDL</a>,
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/html5-r2321.idl">IDL</a>,
 <a
-href="http://suika.fam.cx/~wakaba/-temp/test/dom/js-binding/idls/html.json">JSON</a>
+href="https://suika.suikawiki.org/~wakaba/-temp/test/dom/js-binding/idls/html.json">JSON</a>
 <em>(incomplete)</em>) &mdash; <a
-href="http://suika.fam.cx/gate/test-results/list/html5-r2321/all">Result
+href="https://suika.suikawiki.org/gate/test-results/list/html5-r2321/all">Result
 Table</a>
 
 </ul>
@@ -318,7 +318,7 @@ Table</a>
 <div class=section id=author>
 <h2>Author</h2>
 
-<p><a href="http://suika.fam.cx/~wakaba/who?" rel=author>Wakaba</a>.
+<p><a href="https://suika.suikawiki.org/~wakaba/who?" rel=author>Wakaba</a>.
 
 </div>
 
@@ -330,9 +330,9 @@ generated files) is as follows:
 
 <blockquote>
 <p>Copyright 2008-2011 <a
-href="http://suika.fam.cx/~wakaba/who?">Wakaba</a> <code
+href="https://suika.suikawiki.org/~wakaba/who?">Wakaba</a> <code
 class=mail>&lt;<a
-href="mailto:w@suika.fam.cx">w@suika.fam.cx</a>></code>
+href="mailto:wakaba@suikawiki.org">wakaba@suikawiki.org</a>></code>
 
 <p>This is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

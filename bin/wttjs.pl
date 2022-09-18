@@ -12,7 +12,7 @@ my $instances;
 my $instances_input;
 my $test_dir_name = 'test';
 my $testset_id;
-my $result_list_url = q<http://suika.fam.cx/gate/test-results/list/>;
+my $result_list_url = q<https://suika.suikawiki.org/gate/test-results/list/>;
 
 require JSON;
 use Pod::Usage;
@@ -1108,7 +1108,7 @@ conformance of a Web browser's DOM implementation, with regard to a
 set of interfaces described by a WebIDL fragment.
 
 For more information, see the readme document
-L<http://suika.fam.cx/www/webidl2tests/readme>.
+L<https://suika.suikawiki.org/www/webidl2tests/readme>.
 
 =head1 ARGUMENTS
 
@@ -1144,7 +1144,7 @@ Though the content of the file don't have to be a conforming IDL
 fragment, the result test cases might be broken if it is not.  It is
 encouraged to check the conformance of the input IDL fragment by a
 conformance checker, e.g. WebHACC
-L<http://suika.fam.cx/gate/2007/html/cc/>.
+L<https://suika.suikawiki.org/gate/2007/html/cc/>.
 
 =item C<--instances-file-name I<file-name.json>> (Default: No instance generation)
 
@@ -1216,7 +1216,7 @@ To install the L<JSON|JSON> module from the CPAN, type:
 =item L<Whatpm::WebIDL|Whatpm::WebIDL>
 
 A WebIDL parser and object model implementation, which is part of the
-Whatpm package L<http://suika.fam.cx/www/markup/html/whatpm/readme>.
+Whatpm package L<https://suika.suikawiki.org/www/markup/html/whatpm/readme>.
 
 Note that L<Whatpm::WebIDL|Whatpm::WebIDL> does not depend on any
 other module.
@@ -1231,7 +1231,7 @@ clone it by:
 
 =head1 SEE ALSO
 
-Readme L<http://suika.fam.cx/www/webidl2tests/readme>.
+Readme L<https://suika.suikawiki.org/www/webidl2tests/readme>.
 
 Web IDL specification, revision 1.96 (3 September 2008 Editor's Draft)
 L<http://dev.w3.org/cvsweb/~checkout~/2006/webapi/WebIDL/Overview.html?rev=1.96&content-type=text/html;%20charset=utf-8>.
@@ -1241,11 +1241,11 @@ fragments.
 
 =head1 AUTHOR
 
-Wakaba <w@suika.fam.cx>
+Wakaba <wakaba@suikawiki.org>
 
 =head1 LICENSE
 
-Copyright 2008-2011 Wakaba <w@suika.fam.cx>.
+Copyright 2008-2011 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
